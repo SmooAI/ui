@@ -167,7 +167,8 @@ mod tests {
         // Smoke check the public BEM classes consumers reach for. If anyone
         // renames `.btn--primary` they'll break consumers, so this test fails.
         for cls in [".btn", ".btn--primary", ".btn--ghost", ".card", ".fab",
-                    ".modal__sheet", ".rail", ".rail__btn", ".brand-badge"] {
+                    ".modal__sheet", ".rail", ".rail__btn", ".brand-badge",
+                    ".input", ".input--lg", ".input-error", ".input-hint"] {
             assert!(STYLES.contains(cls), "missing class {cls}");
         }
     }
