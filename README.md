@@ -1,27 +1,21 @@
 <a name="readme-top"></a>
 
 <p align="center">
-  <a href="https://smoo.ai"><img src="https://smoo.ai/images/logo/logo.svg" alt="Smoo AI" width="220" /></a>
-</p>
-
-<h1 align="center">@smooai/ui</h1>
-
-<p align="center">
-  <strong>Smoo AI's cross-language design system — one source of truth for design tokens, base CSS, and the smoo monogram across every runtime.</strong>
+  <a href="https://smoo.ai"><img src=".github/banner.png" alt="@smooai/ui — One design system, every runtime" width="100%" /></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Smoo_AI-platform-00A6A6?style=flat-square" alt="Smoo AI">
-  <img src="https://img.shields.io/badge/license-MIT-F49F0A?style=flat-square" alt="license">
+  <a href="https://smoo.ai"><img src="https://img.shields.io/badge/Smoo_AI-platform-00A6A6?style=for-the-badge&labelColor=020618" alt="Smoo AI"></a>
+  <img src="https://img.shields.io/badge/license-MIT-F49F0A?style=for-the-badge&labelColor=020618" alt="license">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust">
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
 </p>
 
 <p align="center">
-  <a href="#features">Why a multi-language repo</a> ·
-  <a href="#install">Rust quickstart</a> ·
-  <a href="#usage">What's inside</a> ·
-  <a href="#part-of-smoo-ai">Platform</a>
+  <a href="#features"><b>Why a multi-language repo</b></a> &nbsp;·&nbsp; <a href="#install"><b>Rust quickstart</b></a> &nbsp;·&nbsp; <a href="#usage"><b>What's inside</b></a> &nbsp;·&nbsp; <a href="#part-of-smoo-ai"><b>Platform</b></a>
 </p>
 
 ---
@@ -131,14 +125,10 @@ Per-language packages share the same semver line so consumers can correlate vers
 
 ## 🧩 Part of Smoo AI <a name="part-of-smoo-ai"></a>
 
-@smooai/ui is part of the [Smoo AI](https://smoo.ai) platform — an AI-powered business platform with AI built into every product. It's the design layer every Smoo AI surface draws from, in whatever language it ships.
+`@smooai/ui` is built and open-sourced by **[Smoo AI](https://smoo.ai)** — the AI-powered business platform with AI built into every product: CRM, customer support, campaigns, field service, observability, and developer tools.
 
-- [@smooai/logger](https://github.com/SmooAI/logger) — contextual structured logging
-- [@smooai/utils](https://github.com/SmooAI/utils) — foundational TypeScript utilities
-- [@smooai/file](https://github.com/SmooAI/file) — stream-first file ops with magic-byte validation
-- [smooth](https://github.com/SmooAI/smooth) — the agent orchestration toolkit
-
-Browse everything at [github.com/SmooAI](https://github.com/SmooAI).
+- 🧰 **More open source from Smoo AI** — [smoo.ai/open-source](https://smoo.ai/open-source)
+- 🧩 **Sibling packages** — [@smooai/logger](https://github.com/SmooAI/logger), [@smooai/utils](https://github.com/SmooAI/utils), [@smooai/file](https://github.com/SmooAI/file), [smooth](https://github.com/SmooAI/smooth)
 
 ## 🤝 Contributing <a name="contributing"></a>
 
