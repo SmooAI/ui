@@ -1,10 +1,36 @@
-# @smooai/ui
+<a name="readme-top"></a>
 
-SmooAI's **cross-language design system** — design tokens, base CSS, and the smoo monogram, shared across every SmooAI app: TypeScript (web), Rust (desktop), and eventually .NET, Python, Go.
+<p align="center">
+  <a href="https://smoo.ai"><img src="https://smoo.ai/images/logo/logo.svg" alt="Smoo AI" width="220" /></a>
+</p>
 
-## Why a multi-language repo
+<h1 align="center">@smooai/ui</h1>
 
-SmooAI is already a multi-runtime company:
+<p align="center">
+  <strong>Smoo AI's cross-language design system — one source of truth for design tokens, base CSS, and the smoo monogram across every runtime.</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Smoo_AI-platform-00A6A6?style=flat-square" alt="Smoo AI">
+  <img src="https://img.shields.io/badge/license-MIT-F49F0A?style=flat-square" alt="license">
+  <img src="https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
+</p>
+
+<p align="center">
+  <a href="#features">Why a multi-language repo</a> ·
+  <a href="#install">Rust quickstart</a> ·
+  <a href="#usage">What's inside</a> ·
+  <a href="#part-of-smoo-ai">Platform</a>
+</p>
+
+---
+
+> Design tokens, base CSS, and the smoo monogram, shared across every Smoo AI app — TypeScript (web), Rust (desktop), and eventually .NET, Python, and Go. The canonical files live under [`shared/`](shared/); per-language bindings wrap them so "smoo green" never drifts between runtimes.
+
+## ✨ Why a multi-language repo <a name="features"></a>
+
+Smoo AI is already a multi-runtime company:
 
 - `apps/web` — Next.js / React / Tailwind (TypeScript)
 - `smooblue` — Dioxus desktop client (Rust)
@@ -31,19 +57,19 @@ Without a single source of truth, "smoo green" drifts silently across runtimes. 
 └── go/                    # github.com/SmooAI/ui/go — future
 ```
 
-Every language binding embeds `shared/styles.css` + `shared/monogram.svg` at build time. The Rust crate does this via `include_str!`; the TS package does it via a `?inline` Vite import or a build-step copy; etc.
+Every language binding embeds `shared/styles.css` + `shared/monogram.svg` at build time. The Rust crate does this via `include_str!`; the TS package does it via a `?inline` Vite import or a build-step copy; and so on.
 
-## Status
+### Status
 
-| Language | Package | Status |
-| --- | --- | --- |
-| **Rust** | `smooai-ui` (crate) | ✅ Shipped — consumed by `observability-studio` |
-| **TypeScript** | `@smooai/ui` (npm) | 🚧 Lives today inside the `SmooAI/smooai` monorepo at `packages/ui`; will graduate here |
-| **.NET** | `SmooAI.Ui` (NuGet) | 📦 Planned |
-| **Python** | `smooai-ui` (PyPI) | 📦 Planned |
-| **Go** | `github.com/SmooAI/ui/go` | 📦 Planned |
+| Language       | Package                    | Status                                                                                            |
+| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Rust**       | `smooai-ui` (crate)        | ✅ Shipped — consumed by `observability-studio`                                                   |
+| **TypeScript** | `@smooai/ui` (npm)         | 🚧 Lives today inside the `SmooAI/smooai` monorepo at `packages/ui`; will graduate here           |
+| **.NET**       | `SmooAI.Ui` (NuGet)        | 📦 Planned                                                                                        |
+| **Python**     | `smooai-ui` (PyPI)         | 📦 Planned                                                                                        |
+| **Go**         | `github.com/SmooAI/ui/go`  | 📦 Planned                                                                                        |
 
-## Rust quickstart
+## 📦 Rust quickstart <a name="install"></a>
 
 ```toml
 # Cargo.toml
@@ -80,7 +106,9 @@ For non-DOM frameworks (egui, iced, native menus), reference token values direct
 let accent = smooai_ui::tokens::SMOOAI_GREEN; // "oklch(0.657 0.112 194.8)"
 ```
 
-## What's in `shared/styles.css`
+## 📖 What's inside <a name="usage"></a>
+
+### `shared/styles.css`
 
 - **OKLCH brand palette** — `--color-smooai-orange`, `--color-smooai-red`, `--color-smooai-green`, the blue scale, the dark-blue scale
 - **Semantic tokens** — `--background`, `--foreground`, `--card`, `--muted`, `--border`, `--ring`, `--sidebar`
@@ -91,16 +119,37 @@ let accent = smooai_ui::tokens::SMOOAI_GREEN; // "oklch(0.657 0.112 194.8)"
 
 Dark mode is the only mode. Always reference a token, never hardcode hex.
 
-## Versioning
+### Versioning
 
 Per-language packages share the same semver line so consumers can correlate versions across runtimes.
 
-| Bump | Triggers |
-| --- | --- |
-| **Patch** | Token value tweaks, CSS rule additions, bug fixes |
+| Bump      | Triggers                                                          |
+| --------- | ---------------------------------------------------------------- |
+| **Patch** | Token value tweaks, CSS rule additions, bug fixes                |
 | **Minor** | New tokens, new component classes, new monogram variants — additive only |
-| **Major** | Token renames, removed classes, breaking layout assumptions |
+| **Major** | Token renames, removed classes, breaking layout assumptions      |
 
-## Contributing
+## 🧩 Part of Smoo AI <a name="part-of-smoo-ai"></a>
 
-PRs welcome. Keep this surface narrow — only add a token / class when at least two apps need it. Run `cargo test -p smooai-ui` to validate Rust constants match `shared/styles.css`. Future language bindings should add an equivalent drift-detector test.
+@smooai/ui is part of the [Smoo AI](https://smoo.ai) platform — an AI-powered business platform with AI built into every product. It's the design layer every Smoo AI surface draws from, in whatever language it ships.
+
+- [@smooai/logger](https://github.com/SmooAI/logger) — contextual structured logging
+- [@smooai/utils](https://github.com/SmooAI/utils) — foundational TypeScript utilities
+- [@smooai/file](https://github.com/SmooAI/file) — stream-first file ops with magic-byte validation
+- [smooth](https://github.com/SmooAI/smooth) — the agent orchestration toolkit
+
+Browse everything at [github.com/SmooAI](https://github.com/SmooAI).
+
+## 🤝 Contributing <a name="contributing"></a>
+
+PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. Run `cargo test -p smooai-ui` to validate Rust constants match `shared/styles.css`. Future language bindings should add an equivalent drift-detector test.
+
+## 📄 License <a name="license"></a>
+
+MIT — see [LICENSE](./LICENSE).
+
+---
+
+<p align="center">
+  Built by <a href="https://smoo.ai"><strong>Smoo AI</strong></a> — AI built into every product.
+</p>
