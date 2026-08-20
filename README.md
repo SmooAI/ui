@@ -6,70 +6,80 @@
 
 <p align="center">
   <a href="https://smoo.ai"><img src="https://img.shields.io/badge/Smoo_AI-platform-00A6A6?style=for-the-badge&labelColor=020618" alt="Smoo AI"></a>
-  <img src="https://img.shields.io/badge/license-MIT-F49F0A?style=for-the-badge&labelColor=020618" alt="license">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-F49F0A?style=for-the-badge&labelColor=020618" alt="license"></a>
+  <a href="https://smoo.ai/open-source"><img src="https://img.shields.io/badge/open_source-smoo.ai-FF6B6C?style=for-the-badge&labelColor=020618" alt="smoo.ai open source"></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust">
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/OKLCH_tokens-00A6A6?style=flat-square" alt="OKLCH tokens">
+  <img src="https://img.shields.io/badge/no__std_·_zero_deps-F49F0A?style=flat-square" alt="no_std, zero deps">
+  <img src="https://img.shields.io/badge/Rust_binding_·_in--repo-FF6B6C?style=flat-square" alt="Rust binding, in-repo">
 </p>
 
 <p align="center">
-  <a href="#features"><b>Why a multi-language repo</b></a> &nbsp;·&nbsp; <a href="#install"><b>Rust quickstart</b></a> &nbsp;·&nbsp; <a href="#usage"><b>What's inside</b></a> &nbsp;·&nbsp; <a href="#part-of-smoo-ai"><b>Platform</b></a>
+  <a href="#what-is-this"><b>What it is</b></a> &nbsp;·&nbsp; <a href="#feature-tour"><b>Feature tour</b></a> &nbsp;·&nbsp; <a href="#quickstart-rust"><b>Quickstart</b></a> &nbsp;·&nbsp; <a href="#status"><b>Honest status</b></a> &nbsp;·&nbsp; <a href="#relationship-to-client-shared"><b>client-shared</b></a> &nbsp;·&nbsp; <a href="#-part-of-smoo-ai"><b>Platform</b></a>
 </p>
 
 ---
 
-> Design tokens, base CSS, and the smoo monogram, shared across every Smoo AI app — TypeScript (web), Rust (desktop), and eventually .NET, Python, and Go. The canonical files live under [`shared/`](shared/); per-language bindings wrap them so "smoo green" never drifts between runtimes.
+> **"Smoo green" should never depend on which runtime painted it.** This repo holds the canonical Smoo AI design source — one CSS file of OKLCH tokens + base component classes, the smoo monogram, and a JSON token export — under [`shared/`](shared/), with language bindings that embed those files at build time. Today that means **one shipped binding: Rust** (`smooai-ui`, consumed by [smooblue](https://github.com/SmooAI/smooblue) as a git dependency); a TypeScript package lives in the `SmooAI/smooai` monorepo and other bindings are planned, not built.
 
-## ✨ Why a multi-language repo <a name="features"></a>
+## What is this?
 
-Smoo AI is already a multi-runtime company:
+Smoo AI runs on more than one UI runtime — `apps/web` (Next.js / Tailwind), `smooblue` (Dioxus desktop), `observability-studio` (Dioxus viewer). Without a single source of truth, brand colors drift silently between them.
 
-- `apps/web` — Next.js / React / Tailwind (TypeScript)
-- `smooblue` — Dioxus desktop client (Rust)
-- `observability-studio` — Dioxus desktop viewer (Rust)
-- future agents and CLIs in Python / .NET / Go
+This repo is that source of truth:
 
-Without a single source of truth, "smoo green" drifts silently across runtimes. This repo is that source of truth. The canonical files live under [`shared/`](shared/); per-language bindings wrap them.
+- [`shared/styles.css`](shared/styles.css) — the canonical OKLCH tokens + base component CSS (~425 lines). **This file is the design system.**
+- [`shared/monogram.svg`](shared/monogram.svg) — the smoo monogram, `fill="currentColor"`.
+- [`shared/tokens.json`](shared/tokens.json) — the tokens as plain JSON. *Honest note: no code reads this file today* — it exists so a future binding in any language can import tokens without parsing CSS. The only drift guard that runs is the Rust crate's `tokens_match_css` test.
+- [`rust/`](rust/) — the `smooai-ui` crate: `include_str!` constants over the shared files, plus a mirrored `tokens::*` module for non-DOM frameworks. Zero dependencies, `no_std`.
 
+```mermaid
+%%{init: {'theme':'base','themeVariables':{
+  'background':'#020618','primaryColor':'#0b1426','primaryTextColor':'#e6edf6','primaryBorderColor':'#2b3a52',
+  'lineColor':'#7c8aa0','secondaryColor':'#0b1426','tertiaryColor':'#0b1426','fontFamily':'ui-sans-serif, system-ui, sans-serif',
+  'clusterBkg':'#0b1426','clusterBorder':'#22304a'}}}%%
+flowchart LR
+  subgraph SRC["shared/ — canonical source"]
+    CSS["styles.css<br/>OKLCH tokens + base CSS"]
+    SVG["monogram.svg"]
+    JSON["tokens.json<br/>(no consumer yet)"]
+  end
+  CSS -->|"include_str!"| RS["rust/ — smooai-ui crate<br/>STYLES · MONOGRAM_SVG · tokens::*"]
+  SVG -->|"include_str!"| RS
+  RS -->|"git dependency"| BLUE["smooblue<br/>(Dioxus desktop)"]
+  CSS -.->|"planned bindings"| FUT["TS · .NET · Python · Go"]
+
+  classDef warm fill:#f49f0a,stroke:#ff6b6c,color:#1a0f00;
+  classDef teal fill:#00a6a6,stroke:#00c2c2,color:#011;
+  class CSS warm
+  class RS,BLUE teal
 ```
-~/dev/smooai/ui/
-├── shared/                # language-agnostic source of truth
-│   ├── styles.css         # canonical OKLCH tokens + base component CSS
-│   ├── monogram.svg       # smoo monogram
-│   └── tokens.json        # tokens as plain JSON, for any language to import
-│
-├── rust/                  # smooai-ui (crates.io)
-│   ├── Cargo.toml
-│   ├── src/lib.rs         # pub const STYLES / MONOGRAM_SVG / tokens::*
-│   └── tests              # validates Rust consts match shared/styles.css
-│
-├── src/                   # @smooai/ui (npm) — TS, future
-├── dotnet/                # SmooAI.Ui (NuGet) — future
-├── python/                # smooai-ui (PyPI) — future
-└── go/                    # github.com/SmooAI/ui/go — future
-```
 
-Every language binding embeds `shared/styles.css` + `shared/monogram.svg` at build time. The Rust crate does this via `include_str!`; the TS package does it via a `?inline` Vite import or a build-step copy; and so on.
+---
 
-### Status
+## Feature tour
 
-| Language       | Package                    | Status                                                                                            |
-| -------------- | -------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Rust**       | `smooai-ui` (crate)        | ✅ Shipped — consumed by `observability-studio`                                                   |
-| **TypeScript** | `@smooai/ui` (npm)         | 🚧 Lives today inside the `SmooAI/smooai` monorepo at `packages/ui`; will graduate here           |
-| **.NET**       | `SmooAI.Ui` (NuGet)        | 📦 Planned                                                                                        |
-| **Python**     | `smooai-ui` (PyPI)         | 📦 Planned                                                                                        |
-| **Go**         | `github.com/SmooAI/ui/go`  | 📦 Planned                                                                                        |
+| | What | Where |
+| --- | --- | --- |
+| 🎨 | [**Canonical OKLCH tokens + base CSS**](#-the-canonical-stylesheet) | `shared/styles.css` → `smooai_ui::STYLES` |
+| 🟢 | [**Token values as Rust constants**](#-tokens-outside-the-dom) | `smooai_ui::tokens::*` for egui / native chrome / charts |
+| 🔤 | [**The smoo monogram**](#-the-monogram) | `shared/monogram.svg` → `smooai_ui::MONOGRAM_SVG` |
+| 🧪 | [**Drift-detector tests**](#-drift-detection) | `cargo test -p smooai-ui` fails if consts and CSS diverge |
 
-## 📦 Rust quickstart <a name="install"></a>
+### 🎨 The canonical stylesheet
 
-```toml
-# Cargo.toml
-[dependencies]
-smooai-ui = "0.1"
-```
+`shared/styles.css` carries the whole system — dark mode is the only mode, and every color is a token:
+
+- **OKLCH brand palette** — `--color-smooai-orange`, `--color-smooai-red`, `--color-smooai-green`, the blue scale, the dark-blue scale
+- **Semantic tokens** — `--background`, `--foreground`, `--card`, `--muted`, `--border`, `--ring`, `--sidebar`
+- **Brand gradient** — `--gradient-brand` (the signature orange→red 135° gradient)
+- **Geometry** — `--radius`, spacing scale, type stack
+- **Base components** — the `.btn` family, `.card`, `.fab`, `.modal__sheet`, `.rail`, `.brand-badge`, input classes
+- **Reset + base + scrollbars**
+
+In a Dioxus app, inject it once at the root (real API — this is the whole integration):
 
 ```rust
 use dioxus::prelude::*;
@@ -83,58 +93,106 @@ fn App() -> Element {
         div { class: "card",
             button { class: "btn btn--primary", "Save" }
         }
-
-        // Drop the monogram into your brand badge.
-        div {
-            class: "brand-badge",
-            style: "width:32px;height:32px;",
-            dangerous_inner_html: "{smooai_ui::MONOGRAM_SVG}",
-        }
     }
 }
 ```
 
-For non-DOM frameworks (egui, iced, native menus), reference token values directly:
+### 🟢 Tokens outside the DOM
+
+For non-DOM frameworks (egui, iced, native menus, chart libraries), reference token values directly — mirrored from the CSS and guarded by the drift test:
 
 ```rust
-let accent = smooai_ui::tokens::SMOOAI_GREEN; // "oklch(0.657 0.112 194.8)"
+let accent = smooai_ui::tokens::SMOOAI_GREEN;      // "oklch(0.657 0.112 194.8)"
+let bg     = smooai_ui::tokens::BACKGROUND;        // "oklch(0.145 0.014 265)"
+let grad   = smooai_ui::tokens::GRADIENT_BRAND;    // orange→red 135° gradient string
+let radius = smooai_ui::tokens::RADIUS_PX;         // 10
 ```
 
-## 📖 What's inside <a name="usage"></a>
+### 🔤 The monogram
 
-### `shared/styles.css`
+`MONOGRAM_SVG` ships with `fill="currentColor"` so surrounding CSS controls the color. Pair with `.brand-badge` for the gradient pill backdrop:
 
-- **OKLCH brand palette** — `--color-smooai-orange`, `--color-smooai-red`, `--color-smooai-green`, the blue scale, the dark-blue scale
-- **Semantic tokens** — `--background`, `--foreground`, `--card`, `--muted`, `--border`, `--ring`, `--sidebar`
-- **Brand gradient** — `--gradient-brand` (the signature orange→red 135° gradient)
-- **Geometry** — `--radius`, spacing scale, type stack
-- **Base components** — `.btn` family, `.card`, `.fab`, `.modal__sheet`, `.rail`, `.brand-badge`, action-icon hover colors
-- **Reset + base + scrollbars**
+```rust
+rsx! {
+    div {
+        class: "brand-badge",
+        style: "width:32px;height:32px;",
+        dangerous_inner_html: "{smooai_ui::MONOGRAM_SVG}",
+    }
+}
+```
 
-Dark mode is the only mode. Always reference a token, never hardcode hex.
+### 🧪 Drift detection
 
-### Versioning
+The Rust crate ships tests that fail if the mirrored constants and `shared/styles.css` ever diverge, or if a public BEM class is renamed out from under consumers:
+
+```bash
+cd rust && cargo test
+# tokens_match_css        — every tokens::* value must appear in the CSS
+# semantic_classes_exist  — .btn, .btn--primary, .card, .rail, .brand-badge, …
+```
+
+There is no CI in this repo yet — run the test locally before merging a token change.
+
+---
+
+## Quickstart (Rust) <a name="quickstart-rust"></a>
+
+**`smooai-ui` is not published to crates.io.** Consume it as a git dependency — this is exactly how [smooblue](https://github.com/SmooAI/smooblue) consumes it today:
+
+```toml
+[dependencies]
+smooai-ui = { git = "https://github.com/SmooAI/ui.git", branch = "main" }
+```
+
+The crate is a pure `pub const &'static str` carrier: zero dependencies, `no_std`, so it never pins your UI framework's version.
+
+---
+
+## Status
+
+The honest per-language picture — one binding exists, the rest are direction, not code:
+
+| Language | Package | Status |
+| --- | --- | --- |
+| **Rust** | `smooai-ui` | ✅ **In-repo, working** — consumed by [smooblue](https://github.com/SmooAI/smooblue) via git dependency. **Not published to crates.io.** |
+| **TypeScript** | `@smooai/ui` | 🚧 Lives today inside the [`SmooAI/smooai`](https://github.com/SmooAI/smooai) monorepo at `packages/ui`; graduating here is aspirational |
+| **.NET** | `SmooAI.Ui` | 📦 Planned — no code exists |
+| **Python** | `smooai-ui` | 📦 Planned — no code exists |
+| **Go** | `github.com/SmooAI/ui/go` | 📦 Planned — no code exists |
+
+## Relationship to client-shared
+
+[`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) carries this repo's `shared/` files and `ui` surface **byte-for-byte** as its `ui` module, alongside `auth` (Supabase OAuth / M2M / credential storage) — and its README describes it as absorbing and superseding this crate. In practice today:
+
+- **This repo** is the design-system-only home; smooblue consumes `smooai-ui` from here.
+- **client-shared** is the "everything a Smoo Rust client needs" home; the [`th` CLI](https://github.com/SmooAI/smooth) consumes `smooai-client-shared` from there.
+- Neither crate is on crates.io; both are consumed as git dependencies. A change to `shared/styles.css` currently has to be mirrored in both repos by hand.
+
+If you need only the design system, either works — the `ui` surface is identical (`smooai_ui::STYLES` ⇄ `smooai_client_shared::ui::STYLES`).
+
+## Versioning
 
 Per-language packages share the same semver line so consumers can correlate versions across runtimes.
 
-| Bump      | Triggers                                                          |
-| --------- | ---------------------------------------------------------------- |
-| **Patch** | Token value tweaks, CSS rule additions, bug fixes                |
+| Bump | Triggers |
+| --- | --- |
+| **Patch** | Token value tweaks, CSS rule additions, bug fixes |
 | **Minor** | New tokens, new component classes, new monogram variants — additive only |
-| **Major** | Token renames, removed classes, breaking layout assumptions      |
+| **Major** | Token renames, removed classes, breaking layout assumptions |
 
-## 🧩 Part of Smoo AI <a name="part-of-smoo-ai"></a>
+## 🧩 Part of Smoo AI
 
 `@smooai/ui` is built and open-sourced by **[Smoo AI](https://smoo.ai)** — the AI-powered business platform with AI built into every product: CRM, customer support, campaigns, field service, observability, and developer tools.
 
 - 🧰 **More open source from Smoo AI** — [smoo.ai/open-source](https://smoo.ai/open-source)
-- 🧩 **Sibling packages** — [@smooai/logger](https://github.com/SmooAI/logger), [@smooai/utils](https://github.com/SmooAI/utils), [@smooai/file](https://github.com/SmooAI/file), [smooth](https://github.com/SmooAI/smooth)
+- 🧩 **Sibling packages** — [client-shared](https://github.com/SmooAI/client-shared) (this crate's superset), [@smooai/logger](https://github.com/SmooAI/logger), [@smooai/utils](https://github.com/SmooAI/utils), [@smooai/file](https://github.com/SmooAI/file), [smooth](https://github.com/SmooAI/smooth) (the `th` CLI)
 
-## 🤝 Contributing <a name="contributing"></a>
+## 🤝 Contributing
 
-PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. Run `cargo test -p smooai-ui` to validate Rust constants match `shared/styles.css`. Future language bindings should add an equivalent drift-detector test.
+PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. Run `cargo test` in `rust/` to validate the Rust constants match `shared/styles.css`; future language bindings should add an equivalent drift-detector test.
 
-## 📄 License <a name="license"></a>
+## 📄 License
 
 MIT — see [LICENSE](./LICENSE).
 
