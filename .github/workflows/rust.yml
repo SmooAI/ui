@@ -1,0 +1,80 @@
+name: Rust
+
+# This repo shipped with no CI at all — `.github/` held only banner images — so
+# a change could land unbuilt, and `shared/` could drift from SmooAI/client-shared
+# without anything saying so. It did: SmooAI/client-shared spent weeks serving the
+# pre-f230808 monogram (no inner 'S', no dot) because that fix never crossed.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Format check
+        run: cargo fmt --check
+
+      # `--all-targets` so the test code is linted too; without it clippy
+      # silently skips everything behind `#[cfg(test)]`.
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      # Includes the generated-token cross-check against shared/styles.css,
+      # in both directions.
+      - name: Test
+        run: cargo test
+
+  module-tree:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Catches a .rs file on disk that no `mod` declaration reaches, so it
+      # never compiles and no other check can see it.
+      - name: Every .rs file is reachable from the module tree
+        run: python3 scripts/check-module-tree.py
+
+  shared-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # SmooAI/client-shared owns the design system; this repo carries a copy for
+      # its own consumers. The gate is deliberately ONE-directional — client-shared
+      # is ungated, so a design change lands there first and this repo follows.
+      # A bidirectional gate would deadlock: neither PR could go green until the
+      # other merged.
+      #
+      # Compares git blob SHAs from the GitHub contents API against `git ls-tree`,
+      # so added and deleted files are caught as well as edited ones — no
+      # hand-maintained filename list to fall behind.
+      - name: shared/ must match SmooAI/client-shared
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://api.github.com/repos/SmooAI/client-shared/contents/shared?ref=main" \
+            | python3 -c 'import json,sys; [print(e["sha"], e["name"]) for e in sorted(json.load(sys.stdin), key=lambda e: e["name"])]' \
+            > /tmp/upstream.txt
+          git ls-tree HEAD shared/ --format='%(objectname) %(path)' \
+            | sed 's| shared/| |' | sort -k2 > /tmp/local.txt
+          if ! diff -u --label "SmooAI/client-shared@main" /tmp/upstream.txt --label "this repo" /tmp/local.txt; then
+            echo "::error::shared/ has drifted from SmooAI/client-shared, which owns the design system."
+            echo "Land the change in SmooAI/client-shared first, then copy shared/ across:"
+            echo "  for f in \$(git ls-tree --name-only HEAD shared/); do"
+            echo "    curl -fsSL \"https://raw.githubusercontent.com/SmooAI/client-shared/main/\$f\" -o \"\$f\""
+            echo "  done"
+            exit 1
+          fi
+          echo "✓ shared/ matches SmooAI/client-shared@main"
