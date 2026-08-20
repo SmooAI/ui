@@ -40,7 +40,7 @@
 //! re-auditing their CSS.
 
 #![no_std]
-#![doc(html_root_url = "https://docs.rs/smooai-ui/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/smooai-ui/0.1.1")]
 #![warn(missing_docs)]
 
 /// Canonical brand stylesheet, sourced from
