@@ -16,12 +16,22 @@ authors = ["SmooAI <brent@smoo.ai>"]
 include = [
     "Cargo.toml",
     "README.md",
+    "build.rs",
     "src/**/*.rs",
     "../shared/styles.css",
     "../shared/monogram.svg",
+    "../shared/tokens.json",
+    "../shared/tokens_codegen.rs",
+    "../shared/tokens_css_check.rs",
     "../LICENSE",
 ]
 
 [dependencies]
 # Deliberately empty — this crate is a `pub const &'static str` carrier so
 # consumers don't inherit a UI-framework version pin.
+
+[build-dependencies]
+# Build-script only: parses shared/tokens.json to generate the `tokens`
+# module. Build dependencies are host-side and never reach consumers, so the
+# runtime tree stays empty and `no_std`.
+serde_json = "1"

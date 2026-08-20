@@ -32,7 +32,7 @@ This repo is that source of truth:
 
 - [`shared/styles.css`](shared/styles.css) — the canonical OKLCH tokens + base component CSS (~425 lines). **This file is the design system.**
 - [`shared/monogram.svg`](shared/monogram.svg) — the smoo monogram, `fill="currentColor"`.
-- [`shared/tokens.json`](shared/tokens.json) — the tokens as plain JSON. *Honest note: no code reads this file today* — it exists so a future binding in any language can import tokens without parsing CSS. The only drift guard that runs is the Rust crate's `tokens_match_css` test.
+- [`shared/tokens.json`](shared/tokens.json) — the tokens as plain JSON, and the **input the Rust constants are generated from**: `rust/build.rs` runs [`shared/tokens_codegen.rs`](shared/tokens_codegen.rs) over it at build time, so a token cannot exist in the design system and be missing from Rust. [`shared/tokens_css_check.rs`](shared/tokens_css_check.rs) then asserts it agrees with `styles.css` in both directions. A future binding in any language reads the same file.
 - [`rust/`](rust/) — the `smooai-ui` crate: `include_str!` constants over the shared files, plus a mirrored `tokens::*` module for non-DOM frameworks. Zero dependencies, `no_std`.
 
 ```mermaid
@@ -44,10 +44,11 @@ flowchart LR
   subgraph SRC["shared/ — canonical source"]
     CSS["styles.css<br/>OKLCH tokens + base CSS"]
     SVG["monogram.svg"]
-    JSON["tokens.json<br/>(no consumer yet)"]
+    JSON["tokens.json<br/>the token source"]
   end
   CSS -->|"include_str!"| RS["rust/ — smooai-ui crate<br/>STYLES · MONOGRAM_SVG · tokens::*"]
   SVG -->|"include_str!"| RS
+  JSON -->|"build.rs codegen"| RS
   RS -->|"git dependency"| BLUE["smooblue<br/>(Dioxus desktop)"]
   CSS -.->|"planned bindings"| FUT["TS · .NET · Python · Go"]
 
@@ -124,15 +125,19 @@ rsx! {
 
 ### 🧪 Drift detection
 
-The Rust crate ships tests that fail if the mirrored constants and `shared/styles.css` ever diverge, or if a public BEM class is renamed out from under consumers:
+The `tokens` constants are generated from `shared/tokens.json`, so they cannot fall behind it. What still needs checking is the CSS, and the check runs in **both** directions:
 
 ```bash
 cd rust && cargo test
-# tokens_match_css        — every tokens::* value must appear in the CSS
-# semantic_classes_exist  — .btn, .btn--primary, .card, .rail, .brand-badge, …
+# tokens_match_css         — each token equals the RESOLVED value of its custom
+#                            property in :root (var() references followed), not
+#                            merely "appears somewhere in the file"
+# css_colors_are_all_tokens — every colour :root declares has a token, so a new
+#                            colour can't reach the CSS and no language binding
+# semantic_classes_exist   — .btn, .btn--primary, .card, .rail, .brand-badge, …
 ```
 
-There is no CI in this repo yet — run the test locally before merging a token change.
+CI (`.github/workflows/rust.yml`) runs `cargo fmt --check`, `clippy --all-targets -D warnings`, the tests, a module-tree check (no `.rs` file unreachable from a `mod` declaration), and the `shared/` drift gate below.
 
 ---
 
@@ -163,13 +168,25 @@ The honest per-language picture — one binding exists, the rest are direction, 
 
 ## Relationship to client-shared
 
-[`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) carries this repo's `shared/` files and `ui` surface **byte-for-byte** as its `ui` module, alongside `auth` (Supabase OAuth / M2M / credential storage) — and its README describes it as absorbing and superseding this crate. In practice today:
+**[`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) owns the design system. This repo carries a gated copy.**
 
-- **This repo** is the design-system-only home; smooblue consumes `smooai-ui` from here.
-- **client-shared** is the "everything a Smoo Rust client needs" home; the [`th` CLI](https://github.com/SmooAI/smooth) consumes `smooai-client-shared` from there.
-- Neither crate is on crates.io; both are consumed as git dependencies. A change to `shared/styles.css` currently has to be mirrored in both repos by hand.
+client-shared declares itself this crate's successor and is what the [`th` CLI](https://github.com/SmooAI/smooth) ships in production. This repo keeps `shared/` for its own consumers (`observability-studio`, smooblue), and CI **fails if the two diverge** — `shared-drift` compares every blob in `shared/` against `SmooAI/client-shared@main`.
 
-If you need only the design system, either works — the `ui` surface is identical (`smooai_ui::STYLES` ⇄ `smooai_client_shared::ui::STYLES`).
+The gate is deliberately **one-directional**: client-shared is ungated, so a design change lands there first and this repo follows. A bidirectional gate would deadlock, with neither repo's PR able to go green until the other merged.
+
+Why a gate and not a cargo dependency on client-shared? Both crates are git dependencies rather than crates.io publishes, so depending across would put two independently rev-pinned git deps in one graph for any consumer that wants both. The gate closes the silent-divergence hole without the coupling.
+
+> This is not hypothetical. The two copies **had** already diverged: the monogram fix in `f230808` ("restore the inner 'S' curve and the dot") never crossed, so client-shared served a monogram with no S and no dot, and `styles.css` lost the whole `.input` family. Nothing was red. That is the defect this gate exists to prevent.
+
+To sync after a change lands upstream:
+
+```bash
+for f in $(git ls-tree --name-only HEAD shared/); do
+  curl -fsSL "https://raw.githubusercontent.com/SmooAI/client-shared/main/$f" -o "$f"
+done
+```
+
+If you need only the design system, either crate works — the `ui` surface is identical (`smooai_ui::STYLES` ⇄ `smooai_client_shared::ui::STYLES`).
 
 ## Versioning
 
@@ -190,7 +207,7 @@ Per-language packages share the same semver line so consumers can correlate vers
 
 ## 🤝 Contributing
 
-PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. Run `cargo test` in `rust/` to validate the Rust constants match `shared/styles.css`; future language bindings should add an equivalent drift-detector test.
+PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. **Design-system changes land in [`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) first**; this repo's `shared/` is a gated copy and CI rejects a divergent one. Add tokens to `shared/tokens.json` (the Rust constants generate from it) rather than to the CSS alone.
 
 ## 📄 License
 
