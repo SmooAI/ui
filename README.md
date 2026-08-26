@@ -168,25 +168,13 @@ The honest per-language picture — one binding exists, the rest are direction, 
 
 ## Relationship to client-shared
 
-**[`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) owns the design system. This repo carries a gated copy.**
+**This repo owns the design system. [`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) is an auth library and carries no copy of it.**
 
-client-shared declares itself this crate's successor and is what the [`th` CLI](https://github.com/SmooAI/smooth) ships in production. This repo keeps `shared/` for its own consumers (`observability-studio`, smooblue), and CI **fails if the two diverge** — `shared-drift` compares every blob in `shared/` against `SmooAI/client-shared@main`.
+It used to. client-shared declared itself this crate's successor and kept a byte-identical `shared/`, with a CI gate here failing if the two diverged. That arrangement is retired: an org-wide search found **nothing imported `client_shared::ui`** — its only consumer, the [`th` CLI](https://github.com/SmooAI/smooth), builds `features = ["auth"]` and never touched the design half. So the duplicate was deleted at the source rather than policed forever, and the gate went with it.
 
-The gate is deliberately **one-directional**: client-shared is ungated, so a design change lands there first and this repo follows. A bidirectional gate would deadlock, with neither repo's PR able to go green until the other merged.
+> The duplication was not hypothetical. The two copies **had** already diverged: the monogram fix in `f230808` ("restore the inner 'S' curve and the dot") never crossed, so client-shared served a monogram with no S and no dot, and its `styles.css` lost the whole `.input` family. Nothing was red. Deleting the copy removes the failure mode instead of detecting it.
 
-Why a gate and not a cargo dependency on client-shared? Both crates are git dependencies rather than crates.io publishes, so depending across would put two independently rev-pinned git deps in one graph for any consumer that wants both. The gate closes the silent-divergence hole without the coupling.
-
-> This is not hypothetical. The two copies **had** already diverged: the monogram fix in `f230808` ("restore the inner 'S' curve and the dot") never crossed, so client-shared served a monogram with no S and no dot, and `styles.css` lost the whole `.input` family. Nothing was red. That is the defect this gate exists to prevent.
-
-To sync after a change lands upstream:
-
-```bash
-for f in $(git ls-tree --name-only HEAD shared/); do
-  curl -fsSL "https://raw.githubusercontent.com/SmooAI/client-shared/main/$f" -o "$f"
-done
-```
-
-If you need only the design system, either crate works — the `ui` surface is identical (`smooai_ui::STYLES` ⇄ `smooai_client_shared::ui::STYLES`).
+Design changes land here, and only here. Consumers today are [`observability-studio`](https://github.com/SmooAI/observability) and [smooblue](https://github.com/SmooAI/smooblue).
 
 ## Versioning
 
@@ -203,11 +191,11 @@ Per-language packages share the same semver line so consumers can correlate vers
 `@smooai/ui` is built and open-sourced by **[Smoo AI](https://smoo.ai)** — the AI-powered business platform with AI built into every product: CRM, customer support, campaigns, field service, observability, and developer tools.
 
 - 🧰 **More open source from Smoo AI** — [smoo.ai/open-source](https://smoo.ai/open-source)
-- 🧩 **Sibling packages** — [client-shared](https://github.com/SmooAI/client-shared) (this crate's superset), [@smooai/logger](https://github.com/SmooAI/logger), [@smooai/utils](https://github.com/SmooAI/utils), [@smooai/file](https://github.com/SmooAI/file), [smooth](https://github.com/SmooAI/smooth) (the `th` CLI)
+- 🧩 **Sibling packages** — [client-shared](https://github.com/SmooAI/client-shared) (auth for the `th` CLI), [@smooai/logger](https://github.com/SmooAI/logger), [@smooai/utils](https://github.com/SmooAI/utils), [@smooai/file](https://github.com/SmooAI/file), [smooth](https://github.com/SmooAI/smooth) (the `th` CLI)
 
 ## 🤝 Contributing
 
-PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. **Design-system changes land in [`SmooAI/client-shared`](https://github.com/SmooAI/client-shared) first**; this repo's `shared/` is a gated copy and CI rejects a divergent one. Add tokens to `shared/tokens.json` (the Rust constants generate from it) rather than to the CSS alone.
+PRs welcome. Keep this surface narrow — only add a token or class when at least two apps need it. **Design-system changes land here** — this repo is the single source. Add tokens to `shared/tokens.json` (the Rust constants generate from it) rather than to the CSS alone.
 
 ## 📄 License
 
